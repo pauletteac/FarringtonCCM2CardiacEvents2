@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acute Cardiac Events: Clinical Decision Simulation | University of Lynchburg DMSc</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #C41E3A;
+            --primary-red-hover: #A01830;
+            --text-dark: #1a1a1a;
+            --text-medium: #3d3d3d;
+            --text-light: #595959;
+            --bg-cream: #faf9f7;
+            --bg-white: #ffffff;
+            --border-light: #d4d4d4;
+            --accent-gray: #6b6b6b;
+            --success-green: #1e7b34;
+            --success-bg: #e8f5e9;
+            --warning-amber: #b45309;
+            --warning-bg: #fef3c7;
+            --critical-red: #991b1b;
+            --critical-bg: #fee2e2;
+            --info-blue: #1e40af;
+            --info-bg: #dbeafe;
+            --decision-purple: #5b21b6;
+            --decision-purple-hover: #4c1d95;
+            --decision-bg: #f5f3ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-red);
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .skip-link:focus { top: 0; }
+        header {
+            background: var(--bg-white);
+            border-bottom: 3px solid var(--primary-red);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        .logo-svg { height: 50px; width: auto; }
+        .header-title {
+            font-family: 'Merriweather', Georgia, serif;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--text-medium);
+        }
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-light);
+            transition: background-color 0.3s ease;
+        }
+        .progress-dot.active { background: var(--primary-red); }
+        .progress-dot.completed { background: var(--success-green); }
+        main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-intro { text-align: center; padding: 3rem 2rem; }
+        h1 {
+            font-family: 'Merriweather', Georgia, serif;
+            font-size: 2rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+        h2 {
+            font-family: 'Merriweather', Georgia, serif;
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+        h3 {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.75rem;
+        }
+        p { margin-bottom: 1rem; color: var(--text-medium); }
+        .patient-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-light);
+        }
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-red), #e74c3c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .patient-name { font-weight: 700; font-size: 1.25rem; color: var(--text-dark); }
+        .patient-demographics { font-size: 0.95rem; color: var(--text-light); }
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--bg-cream);
+            border-radius: 8px;
+        }
+        .vital-item { text-align: center; }
+        .vital-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        .vital-value { font-size: 1.2rem; font-weight: 700; color: var(--text-dark); }
+        .vital-value.abnormal { color: var(--critical-red); }
+        .lab-results {
+            background: var(--bg-cream);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .lab-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .lab-item:last-child { border-bottom: none; }
+        .lab-name { color: var(--text-medium); }
+        .lab-value { font-weight: 600; }
+        .lab-value.high { color: var(--critical-red); }
+        .decision-container { margin-top: 2rem; }
+        .decision-label {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--decision-purple);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .decision-label::before { content: "▶"; font-size: 0.8rem; }
+        .decision-buttons { display: flex; flex-direction: column; gap: 0.75rem; }
+        .decision-btn {
+            background: var(--decision-bg);
+            border: 2px solid var(--decision-purple);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--decision-purple);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .decision-btn:hover, .decision-btn:focus {
+            background: var(--decision-purple);
+            color: white;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(91, 33, 182, 0.3);
+        }
+        .decision-btn:focus { outline: 3px solid var(--decision-purple); outline-offset: 2px; }
+        .decision-letter {
+            width: 32px;
+            height: 32px;
+            background: var(--decision-purple);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .decision-btn:hover .decision-letter, .decision-btn:focus .decision-letter {
+            background: white;
+            color: var(--decision-purple);
+        }
+        .feedback-box {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+        .feedback-optimal { background: var(--success-bg); border-color: var(--success-green); }
+        .feedback-suboptimal { background: var(--warning-bg); border-color: var(--warning-amber); }
+        .feedback-critical { background: var(--critical-bg); border-color: var(--critical-red); }
+        .feedback-info { background: var(--info-bg); border-color: var(--info-blue); }
+        .feedback-title { font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .feedback-optimal .feedback-title { color: var(--success-green); }
+        .feedback-suboptimal .feedback-title { color: var(--warning-amber); }
+        .feedback-critical .feedback-title { color: var(--critical-red); }
+        .feedback-info .feedback-title { color: var(--info-blue); }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border-radius: 8px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        .btn-primary { background: var(--primary-red); color: white; }
+        .btn-primary:hover, .btn-primary:focus { background: var(--primary-red-hover); outline: none; }
+        .btn-primary:focus { outline: 3px solid var(--primary-red); outline-offset: 2px; }
+        .btn-secondary { background: var(--bg-white); color: var(--text-dark); border: 2px solid var(--border-light); }
+        .btn-secondary:hover, .btn-secondary:focus { border-color: var(--text-dark); outline: none; }
+        .objectives-list { list-style: none; margin: 1.5rem 0; }
+        .objectives-list li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--text-medium);
+            border-bottom: 1px solid var(--border-light);
+        }
+        .objectives-list li:last-child { border-bottom: none; }
+        .objectives-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary-red);
+            font-weight: 700;
+        }
+        .bloom-tag {
+            display: inline-block;
+            background: var(--info-bg);
+            color: var(--info-blue);
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+        }
+        .ekg-display { background: #0a0a0a; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .ekg-label { color: #00ff00; font-family: monospace; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .ekg-finding {
+            color: #ffffff;
+            font-family: 'Source Sans 3', sans-serif;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        .case-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .case-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .case-card:hover, .case-card:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.15);
+            outline: none;
+        }
+        .case-card:focus { outline: 3px solid var(--primary-red); outline-offset: 2px; }
+        .case-card.completed { border-color: var(--success-green); }
+        .case-card.completed::after {
+            content: "✓ Completed";
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: var(--success-green);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .case-number {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary-red);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .case-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .case-preview { font-size: 0.9rem; color: var(--text-light); }
+        .clinical-note {
+            background: #fffef5;
+            border: 1px solid #e6e0b0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+        .clinical-note-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            font-style: normal;
+            margin-bottom: 0.5rem;
+        }
+        .content-list { margin: 1rem 0; padding-left: 1.5rem; }
+        .content-list li { margin-bottom: 0.5rem; color: var(--text-medium); }
+        footer { text-align: center; padding: 2rem; color: var(--text-light); font-size: 0.9rem; }
+        @media (max-width: 600px) {
+            header { padding: 1rem; }
+            main { padding: 1rem; }
+            .card { padding: 1.25rem; }
+            h1 { font-size: 1.5rem; }
+            .vitals-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (prefers-contrast: high) {
+            .decision-btn { border-width: 3px; }
+            .vital-value.abnormal { text-decoration: underline; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .screen { animation: none; }
+            .decision-btn, .btn, .case-card { transition: none; }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 80" aria-label="University of Lynchburg DMSc Program Logo">
+                <polygon points="35,10 50,20 50,40 35,50 20,40 20,20" fill="#C41E3A"/>
+                <polygon points="50,40 65,50 65,70 50,80 35,70 35,50" fill="#6b6b6b"/>
+                <polygon points="20,40 35,50 35,70 20,80 5,70 5,50" fill="#a0a0a0"/>
+                <text x="80" y="55" font-family="Arial Black, sans-serif" font-size="42" font-weight="900">
+                    <tspan fill="#C41E3A">DMS</tspan><tspan fill="#6b6b6b">c</tspan>
+                </text>
+            </svg>
+            <div class="header-title">Critical Care Medicine II</div>
+        </div>
+        <div class="progress-indicator" role="navigation" aria-label="Case progress">
+            <span>Progress:</span>
+            <div class="progress-dot" id="prog-1" aria-label="Case 1"></div>
+            <div class="progress-dot" id="prog-2" aria-label="Case 2"></div>
+            <div class="progress-dot" id="prog-3" aria-label="Case 3"></div>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- INTRO SCREEN -->
+        <section class="screen active" id="intro-screen" aria-labelledby="intro-title">
+            <div class="card card-intro">
+                <svg viewBox="0 0 280 80" aria-hidden="true" style="margin-bottom: 1.5rem; height: 60px; width: auto;">
+                    <polygon points="35,10 50,20 50,40 35,50 20,40 20,20" fill="#C41E3A"/>
+                    <polygon points="50,40 65,50 65,70 50,80 35,70 35,50" fill="#6b6b6b"/>
+                    <polygon points="20,40 35,50 35,70 20,80 5,70 5,50" fill="#a0a0a0"/>
+                    <text x="80" y="55" font-family="Arial Black, sans-serif" font-size="42" font-weight="900">
+                        <tspan fill="#C41E3A">DMS</tspan><tspan fill="#6b6b6b">c</tspan>
+                    </text>
+                </svg>
+                <h1 id="intro-title">Acute Cardiac Events: Clinical Decision Simulation</h1>
+                <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto 1.5rem;">
+                    Welcome to this interactive clinical decision-making simulation. You will evaluate three ICU patients presenting with elevated troponin levels and make real-time management decisions. Your choices will directly impact patient outcomes.
+                </p>
+            </div>
+            <div class="card">
+                <h2>Learning Objectives</h2>
+                <p>Upon completion of this simulation, you will be able to:</p>
+                <ul class="objectives-list">
+                    <li><strong>Analyze</strong> troponin elevation patterns to differentiate between Type 1 MI, Type 2 MI, and non-ischemic causes <span class="bloom-tag">Analysis</span></li>
+                    <li><strong>Evaluate</strong> clinical presentations including symptoms, EKG findings, and laboratory values to determine appropriate diagnostic pathways <span class="bloom-tag">Evaluation</span></li>
+                    <li><strong>Apply</strong> evidence-based management principles tailored to specific etiologies of myocardial injury <span class="bloom-tag">Application</span></li>
+                    <li><strong>Synthesize</strong> multiple clinical data points to formulate comprehensive treatment plans while avoiding common diagnostic pitfalls <span class="bloom-tag">Synthesis</span></li>
+                </ul>
+            </div>
+            <div class="card">
+                <h2>Select a Case to Begin</h2>
+                <p>Each case presents a unique clinical scenario. Complete all three cases to finish the simulation.</p>
+                <div class="case-selector" role="list">
+                    <div class="case-card" id="case-card-1" role="listitem" tabindex="0" onclick="startCase(1)" onkeydown="handleCaseKey(event, 1)">
+                        <div class="case-number">Case 1</div>
+                        <div class="case-title">The Septic Patient</div>
+                        <div class="case-preview">68-year-old male with pneumonia, elevated troponin, and hemodynamic instability</div>
+                    </div>
+                    <div class="case-card" id="case-card-2" role="listitem" tabindex="0" onclick="startCase(2)" onkeydown="handleCaseKey(event, 2)">
+                        <div class="case-number">Case 2</div>
+                        <div class="case-title">Chest Pain After Stress</div>
+                        <div class="case-preview">54-year-old female presenting after emotional crisis with chest pain and EKG changes</div>
+                    </div>
+                    <div class="case-card" id="case-card-3" role="listitem" tabindex="0" onclick="startCase(3)" onkeydown="handleCaseKey(event, 3)">
+                        <div class="case-number">Case 3</div>
+                        <div class="case-title">The Trauma Patient</div>
+                        <div class="case-preview">42-year-old male post-MVC with sternal fracture and cardiac biomarker elevation</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASE 1: SEPTIC PATIENT -->
+        <section class="screen" id="case1-step1" aria-labelledby="case1-title">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | MRN: 847291</div></div>
+                </div>
+                <h2 id="case1-title">Initial Presentation</h2>
+                <p>Mr. Johnson is a 68-year-old male transferred to the ICU from the medical floor for hypotension and increasing oxygen requirements. He was admitted 2 days ago for community-acquired pneumonia.</p>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Chief Complaint</div>
+                    "I've been feeling weaker and my breathing is getting worse. I don't have any chest pain."
+                </div>
+                <h3>Current Vital Signs</h3>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">82/48 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">118 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">RR</div><div class="vital-value abnormal">28/min</div></div>
+                    <div class="vital-item"><div class="vital-label">Temp</div><div class="vital-value abnormal">39.2°C</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value abnormal">89% on 6L NC</div></div>
+                    <div class="vital-item"><div class="vital-label">MAP</div><div class="vital-value abnormal">59 mmHg</div></div>
+                </div>
+                <h3>Initial Laboratory Values</h3>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin I (high-sensitivity)</span><span class="lab-value high">0.89 ng/mL (normal &lt;0.04)</span></div>
+                    <div class="lab-item"><span class="lab-name">WBC</span><span class="lab-value high">18.2 x10⁹/L</span></div>
+                    <div class="lab-item"><span class="lab-name">Lactate</span><span class="lab-value high">4.8 mmol/L</span></div>
+                    <div class="lab-item"><span class="lab-name">Procalcitonin</span><span class="lab-value high">8.4 ng/mL</span></div>
+                    <div class="lab-item"><span class="lab-name">Creatinine</span><span class="lab-value high">2.1 mg/dL (baseline 1.0)</span></div>
+                    <div class="lab-item"><span class="lab-name">BNP</span><span class="lab-value high">420 pg/mL</span></div>
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">12-Lead EKG Findings:</div>
+                    <div class="ekg-finding">Sinus tachycardia at 118 bpm. No ST-segment elevation or depression. No T-wave inversions. No evidence of acute ischemic changes.</div>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">What is your initial priority?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case1-heparin')"><span class="decision-letter">A</span>Start heparin drip and activate the cath lab for emergent coronary angiography</button>
+                        <button class="decision-btn" onclick="showScreen('case1-sepsis')"><span class="decision-letter">B</span>Begin aggressive sepsis resuscitation with IV fluids and vasopressors, trend troponin</button>
+                        <button class="decision-btn" onclick="showScreen('case1-aspirin')"><span class="decision-letter">C</span>Administer aspirin 325mg, sublingual nitroglycerin, and consult cardiology urgently</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case1-heparin">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | 15 minutes later</div></div>
+                </div>
+                <h2>Consequence: Anticoagulation in Septic Shock</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Critical Deterioration</div>
+                    <p>You initiated a heparin drip and activated the cath lab. While preparing for transport, the patient's condition rapidly deteriorates.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">68/38 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">134 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value abnormal">82%</div></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    The cath lab team refuses to take the patient given profound hemodynamic instability. The interventional cardiologist notes the absence of ischemic EKG changes combined with sepsis makes Type 1 MI unlikely.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Clinical Teaching Point</div>
+                    <p>Troponin elevation in sepsis reflects <strong>Type 2 MI or non-ischemic myocardial injury</strong> from inflammatory myocardial depression, not plaque rupture. Anticoagulation increases bleeding risk without addressing the underlying pathology.</p>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">The patient is now in decompensated septic shock. What is your next action?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case1-reverse')"><span class="decision-letter">A</span>Discontinue heparin, initiate IV fluid resuscitation and norepinephrine</button>
+                        <button class="decision-btn" onclick="showScreen('case1-continue-heparin')"><span class="decision-letter">B</span>Continue heparin while treating hypotension—don't want to miss an MI</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case1-continue-heparin">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | 45 minutes later</div></div>
+                </div>
+                <h2>Consequence: Bleeding Complication</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Major Bleeding Event</div>
+                    <p>While attempting to place a central line, you encounter significant bleeding. A STAT hemoglobin returns at 6.8 g/dL (down from 11.2 on admission).</p>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Hemoglobin</span><span class="lab-value high">6.8 g/dL (was 11.2)</span></div>
+                    <div class="lab-item"><span class="lab-name">Platelets</span><span class="lab-value high">68 x10⁹/L (was 142)</span></div>
+                    <div class="lab-item"><span class="lab-name">PTT</span><span class="lab-value high">&gt;150 seconds</span></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    CT imaging reveals retroperitoneal hemorrhage. The patient requires massive transfusion protocol. This is a common pitfall—unnecessary anticoagulation in critically ill patients leads to significant morbidity.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Key Learning Point</div>
+                    <p><strong>"Treat the patient, not the troponin."</strong> In sepsis, troponin elevation correlates with disease severity but does not indicate ACS therapy. The appropriate management is treating underlying sepsis while trending troponin.</p>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="showScreen('case1-step1')">← Review Initial Presentation</button>
+                    <button class="btn btn-primary" onclick="completeCase(1); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case1-reverse">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | 2 hours later</div></div>
+                </div>
+                <h2>Course Correction: Sepsis Resuscitation</h2>
+                <div class="feedback-box feedback-suboptimal">
+                    <div class="feedback-title">⚡ Delayed but Recovering</div>
+                    <p>You've discontinued heparin and initiated appropriate sepsis management. The delay resulted in a longer ICU course, but the patient is now stabilizing.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">92/58 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value">104 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">MAP</div><div class="vital-value">69 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">Lactate</div><div class="vital-value">3.2 mmol/L ↓</div></div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Repeat Troponin (6 hours)</span><span class="lab-value">0.94 ng/mL (minimal change)</span></div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Troponin Interpretation</div>
+                    <p>The troponin remained relatively stable rather than showing the dynamic rise/fall pattern typical of Type 1 MI. Combined with improving hemodynamics and no ischemic EKG changes, this confirms <strong>sepsis-related myocardial injury</strong>.</p>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="showScreen('case1-step1')">← Review Initial Presentation</button>
+                    <button class="btn btn-primary" onclick="completeCase(1); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case1-aspirin">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | 10 minutes later</div></div>
+                </div>
+                <h2>Consequence: Vasodilation in Distributive Shock</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Hemodynamic Collapse</div>
+                    <p>After administering sublingual nitroglycerin, the patient's blood pressure dropped precipitously.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">54/32 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">142 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">Mental Status</div><div class="vital-value abnormal">Unresponsive</div></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    The nitroglycerin caused further vasodilation in a patient already in distributive shock. The patient is emergently intubated and placed on maximum vasopressor support.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Critical Teaching Point</div>
+                    <p><strong>Nitroglycerin is contraindicated in hypotension.</strong> In septic patients, vasodilators worsen impaired vascular tone. The absence of chest pain and ischemic EKG changes makes ACS unlikely.</p>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">How do you proceed?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case1-reverse')"><span class="decision-letter">A</span>Prioritize sepsis resuscitation with IV fluids and vasopressors</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case1-sepsis">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">RJ</div>
+                    <div><div class="patient-name">Robert Johnson</div><div class="patient-demographics">68-year-old Male | 4 hours later</div></div>
+                </div>
+                <h2>Optimal Management: Sepsis-Directed Therapy</h2>
+                <div class="feedback-box feedback-optimal">
+                    <div class="feedback-title">✓ Excellent Clinical Reasoning</div>
+                    <p>You correctly identified this as sepsis-related myocardial injury and prioritized treatment of the underlying condition.</p>
+                </div>
+                <h3>Treatment Initiated</h3>
+                <ul class="content-list">
+                    <li>30 mL/kg crystalloid bolus</li>
+                    <li>Norepinephrine infusion titrated to MAP ≥65 mmHg</li>
+                    <li>Broad-spectrum antibiotics (within 1 hour)</li>
+                    <li>Serial troponin monitoring Q6H</li>
+                    <li>Bedside echocardiogram ordered</li>
+                </ul>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">98/62 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value">94 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">MAP</div><div class="vital-value">74 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">Lactate</div><div class="vital-value">2.1 mmol/L ↓</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value">94% on 4L NC</div></div>
+                    <div class="vital-item"><div class="vital-label">UOP</div><div class="vital-value">45 mL/hr</div></div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin (6 hours)</span><span class="lab-value">0.82 ng/mL (stable)</span></div>
+                    <div class="lab-item"><span class="lab-name">Troponin (12 hours)</span><span class="lab-value">0.54 ng/mL (downtrending)</span></div>
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">Echocardiogram Findings:</div>
+                    <div class="ekg-finding">Mild global hypokinesis consistent with septic cardiomyopathy. EF 40-45%. No regional wall motion abnormalities. No pericardial effusion.</div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Key Learning Points</div>
+                    <p><strong>Sepsis-related troponin elevation</strong> is common and reflects inflammatory myocardial depression. Key differentiating features:</p>
+                    <ul class="content-list">
+                        <li>Absence of ischemic symptoms (no chest pain)</li>
+                        <li>No ischemic EKG changes</li>
+                        <li>Troponin trend is relatively stable</li>
+                        <li>Clinical context of severe sepsis/shock</li>
+                        <li>Improvement with treatment of underlying condition</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="completeCase(1); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASE 2: TAKOTSUBO -->
+        <section class="screen" id="case2-step1" aria-labelledby="case2-title">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | MRN: 592847</div></div>
+                </div>
+                <h2 id="case2-title">Initial Presentation</h2>
+                <p>Ms. Santos is a 54-year-old female presenting with sudden onset chest pain that began 3 hours ago during her mother's funeral. She describes pressure-like pain radiating to her left arm, with dyspnea and diaphoresis.</p>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">History</div>
+                    "The pain started right after I gave the eulogy. It felt like an elephant sitting on my chest. My mother just died of a heart attack last week."
+                </div>
+                <h3>Past Medical History</h3>
+                <p>Hypertension (well-controlled), anxiety disorder. No prior cardiac history. No diabetes. Former smoker (quit 10 years ago).</p>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">102/68 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">108 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">RR</div><div class="vital-value">20/min</div></div>
+                    <div class="vital-item"><div class="vital-label">Temp</div><div class="vital-value">36.8°C</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value">96% RA</div></div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin I (high-sensitivity)</span><span class="lab-value high">0.42 ng/mL (normal &lt;0.04)</span></div>
+                    <div class="lab-item"><span class="lab-name">BNP</span><span class="lab-value high">890 pg/mL</span></div>
+                    <div class="lab-item"><span class="lab-name">Creatinine</span><span class="lab-value">0.9 mg/dL</span></div>
+                    <div class="lab-item"><span class="lab-name">Hemoglobin</span><span class="lab-value">13.2 g/dL</span></div>
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">12-Lead EKG Findings:</div>
+                    <div class="ekg-finding">Sinus tachycardia at 108 bpm. ST elevation in leads V2-V5 (1-2mm). Diffuse T-wave inversions in precordial leads. QTc prolonged at 480ms.</div>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">Given the ST elevation and troponin elevation, what is your next step?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case2-cath-immediate')"><span class="decision-letter">A</span>Activate STEMI protocol and proceed directly to emergent cardiac catheterization</button>
+                        <button class="decision-btn" onclick="showScreen('case2-echo-first')"><span class="decision-letter">B</span>Start ACS protocol with aspirin/heparin, obtain urgent echocardiogram before cath decision</button>
+                        <button class="decision-btn" onclick="showScreen('case2-observe')"><span class="decision-letter">C</span>This is likely anxiety-related; observe with serial troponins and reassess</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case2-cath-immediate">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | Cardiac Cath Lab</div></div>
+                </div>
+                <h2>Cardiac Catheterization Results</h2>
+                <div class="feedback-box feedback-suboptimal">
+                    <div class="feedback-title">⚡ Reasonable but Suboptimal</div>
+                    <p>Given ST elevation and troponin, activating the cath lab is defensible. However, the clinical context (emotional stress trigger, postmenopausal female, diffuse EKG changes) should raise suspicion for an alternative diagnosis.</p>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Catheterization Findings</div>
+                    <strong>Coronary arteries are angiographically NORMAL.</strong> Left ventriculography shows apical ballooning with akinesis of mid and apical segments—classic "Takotsubo" pattern.
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">Left Ventriculogram:</div>
+                    <div class="ekg-finding">Characteristic apical ballooning pattern. EF estimated at 35%. Wall motion abnormality extends beyond a single coronary territory.</div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Diagnosis: Takotsubo Cardiomyopathy</div>
+                    <p>"Broken heart syndrome" mimics ACS but coronary arteries are normal. Key features:</p>
+                    <ul class="content-list">
+                        <li>Typically affects postmenopausal women</li>
+                        <li>Triggered by intense emotional or physical stress</li>
+                        <li>Modest troponin elevation (lower than expected for wall motion abnormality)</li>
+                        <li>Elevated BNP disproportionate to troponin</li>
+                        <li>Generally reversible with supportive care</li>
+                    </ul>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">What is the appropriate management?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case2-supportive')"><span class="decision-letter">A</span>Supportive care: beta-blockers (if tolerated), ACE inhibitor, monitor for complications</button>
+                        <button class="decision-btn" onclick="showScreen('case2-aggressive-acs')"><span class="decision-letter">B</span>Continue aggressive ACS therapy with dual antiplatelet therapy and anticoagulation</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case2-echo-first">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | 30 minutes later</div></div>
+                </div>
+                <h2>Urgent Echocardiogram Results</h2>
+                <div class="feedback-box feedback-optimal">
+                    <div class="feedback-title">✓ Excellent Clinical Reasoning</div>
+                    <p>You recognized that the clinical context warranted additional diagnostic information before committing to invasive intervention.</p>
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">Echocardiogram Findings:</div>
+                    <div class="ekg-finding"><strong>Apical ballooning pattern.</strong> Akinesis of mid-ventricular and apical segments. Hyperkinesis of basal segments. Wall motion abnormality crosses coronary territories. EF approximately 35%.</div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Pattern Recognition: Takotsubo Cardiomyopathy</div>
+                    <p>The wall motion abnormality extending beyond a single coronary territory, combined with emotional trigger and patient demographics, strongly suggests Takotsubo over ACS.</p>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Cardiology Consultation</div>
+                    "Echo findings highly suggestive of Takotsubo. Recommend coronary angiography to confirm normal coronaries—can be done urgently rather than emergently."
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">Coronary angiography confirms normal arteries. What is your management plan?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case2-supportive')"><span class="decision-letter">A</span>Supportive care with beta-blocker, ACE inhibitor, and monitoring for complications</button>
+                        <button class="decision-btn" onclick="showScreen('case2-aggressive-acs')"><span class="decision-letter">B</span>Dual antiplatelet therapy and therapeutic anticoagulation for NSTEMI</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case2-observe">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | 2 hours later</div></div>
+                </div>
+                <h2>Consequence: Delayed Treatment</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Clinical Deterioration</div>
+                    <p>While observing, she develops hypotension and worsening dyspnea.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">78/52 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">124 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value abnormal">88% on 4L NC</div></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    The patient has developed cardiogenic shock. Emergent echocardiogram shows severe LV dysfunction with apical ballooning pattern.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Critical Teaching Point</div>
+                    <p><strong>ST elevation with troponin elevation requires urgent cardiac evaluation</strong>—even when you suspect a non-ACS etiology. Takotsubo can cause significant LV dysfunction and cardiogenic shock.</p>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">The patient is now hemodynamically unstable. What is your next step?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case2-cath-immediate')"><span class="decision-letter">A</span>Emergent cardiac catheterization and hemodynamic support</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case2-aggressive-acs">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | Day 3</div></div>
+                </div>
+                <h2>Consequence: Unnecessary Anticoagulation</h2>
+                <div class="feedback-box feedback-suboptimal">
+                    <div class="feedback-title">⚡ Inappropriate Therapy</div>
+                    <p>You initiated dual antiplatelet therapy and therapeutic anticoagulation despite normal coronary arteries.</p>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Hospital Course</div>
+                    On day 3, the patient develops hematuria. Her hemoglobin drops from 13.2 to 10.8 g/dL. This aggressive regimen is unnecessary in Takotsubo where there is no coronary thrombus.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Takotsubo Management</div>
+                    <p>Requires <strong>supportive care</strong>, not aggressive ACS therapy:</p>
+                    <ul class="content-list">
+                        <li>Beta-blockers to reduce catecholamine effects</li>
+                        <li>ACE inhibitors for LV remodeling</li>
+                        <li>Monitor for heart failure, LV thrombus, arrhythmias</li>
+                        <li>Anticoagulation only if LV thrombus develops</li>
+                        <li>Most patients recover LV function within weeks</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="showScreen('case2-step1')">← Review Initial Presentation</button>
+                    <button class="btn btn-primary" onclick="completeCase(2); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case2-supportive">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">MS</div>
+                    <div><div class="patient-name">Maria Santos</div><div class="patient-demographics">54-year-old Female | Day 5</div></div>
+                </div>
+                <h2>Optimal Management: Supportive Care</h2>
+                <div class="feedback-box feedback-optimal">
+                    <div class="feedback-title">✓ Excellent Management</div>
+                    <p>You appropriately managed Takotsubo with supportive care focused on preventing complications and supporting recovery.</p>
+                </div>
+                <h3>Treatment Plan</h3>
+                <ul class="content-list">
+                    <li>Low-dose beta-blocker (metoprolol 12.5mg BID)</li>
+                    <li>ACE inhibitor (lisinopril 5mg daily)</li>
+                    <li>Telemetry monitoring for arrhythmias</li>
+                    <li>Follow-up echocardiogram scheduled</li>
+                    <li>Psychology consultation for grief support</li>
+                </ul>
+                <div class="ekg-display">
+                    <div class="ekg-label">Day 5 Echo:</div>
+                    <div class="ekg-finding">Improved LV function. EF now 45-50% (previously 35%). Apical wall motion improving. No LV thrombus.</div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin (Day 5)</span><span class="lab-value">0.08 ng/mL (resolved)</span></div>
+                    <div class="lab-item"><span class="lab-name">BNP (Day 5)</span><span class="lab-value">280 pg/mL (improving)</span></div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Key Learning Points: Takotsubo</div>
+                    <ul class="content-list">
+                        <li><strong>Classic presentation:</strong> Postmenopausal female with intense emotional/physical stressor</li>
+                        <li><strong>Distinguishing features:</strong> Modest troponin, high BNP, diffuse EKG changes</li>
+                        <li><strong>Echo pattern:</strong> Apical ballooning extending beyond coronary territory</li>
+                        <li><strong>Prognosis:</strong> Generally excellent with recovery over weeks</li>
+                        <li><strong>Treatment:</strong> Supportive care, NOT aggressive ACS therapy</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="completeCase(2); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASE 3: TRAUMA -->
+        <section class="screen" id="case3-step1" aria-labelledby="case3-title">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | MRN: 673921</div></div>
+                </div>
+                <h2 id="case3-title">Initial Presentation</h2>
+                <p>Mr. Mitchell is a 42-year-old male brought to the trauma bay after a high-speed motor vehicle collision. He was the restrained driver; airbags deployed. He complains of chest pain and shortness of breath.</p>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">EMS Report</div>
+                    "Patient was T-boned at approximately 45 mph. Initial GCS 15, chest and rib pain. Steering wheel deformed. Positive loss of consciousness at scene."
+                </div>
+                <h3>Physical Examination</h3>
+                <ul class="content-list">
+                    <li>Alert and oriented, in moderate distress</li>
+                    <li>Contusion over sternum, tender to palpation</li>
+                    <li>Decreased breath sounds on left</li>
+                    <li>Left-sided chest wall tenderness with crepitus</li>
+                </ul>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">98/64 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">118 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">RR</div><div class="vital-value abnormal">26/min</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value abnormal">92% RA</div></div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin I (high-sensitivity)</span><span class="lab-value high">1.24 ng/mL (normal &lt;0.04)</span></div>
+                    <div class="lab-item"><span class="lab-name">Hemoglobin</span><span class="lab-value">12.8 g/dL</span></div>
+                    <div class="lab-item"><span class="lab-name">Lactate</span><span class="lab-value high">3.2 mmol/L</span></div>
+                </div>
+                <div class="ekg-display">
+                    <div class="ekg-label">12-Lead EKG:</div>
+                    <div class="ekg-finding">Sinus tachycardia at 118 bpm. Occasional PVCs. No ST elevation or depression. Nonspecific T-wave flattening.</div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">CT Chest Results</div>
+                    Sternal fracture. Left-sided rib fractures (ribs 4-7). Small left pneumothorax. No mediastinal hematoma. Aorta intact.
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">Given the elevated troponin in this trauma patient, what is your initial approach?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case3-acs-protocol')"><span class="decision-letter">A</span>Elevated troponin with tachycardia suggests MI—start aspirin, heparin, consult cardiology for cath</button>
+                        <button class="decision-btn" onclick="showScreen('case3-blunt-cardiac')"><span class="decision-letter">B</span>This is likely blunt cardiac injury—monitor on telemetry, obtain echocardiogram, trend troponin</button>
+                        <button class="decision-btn" onclick="showScreen('case3-ignore')"><span class="decision-letter">C</span>Troponin is often elevated after trauma; it's not clinically significant—focus on other injuries</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-acs-protocol">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | 2 hours later</div></div>
+                </div>
+                <h2>Consequence: Anticoagulation in Trauma</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Bleeding Complication</div>
+                    <p>You initiated heparin and aspirin. The trauma surgery team calls urgently—the patient's left hemothorax is expanding.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">76/48 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">138 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">Chest Tube Output</div><div class="vital-value abnormal">800 mL in 1 hour</div></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    The chest tube is draining blood rapidly. Repeat hemoglobin is 8.2 g/dL. The patient requires emergent transfusion and reversal of anticoagulation.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Critical Teaching Point</div>
+                    <p><strong>Anticoagulation in trauma patients is extremely dangerous.</strong> The troponin elevation is from blunt cardiac injury, not ACS.</p>
+                    <ul class="content-list">
+                        <li>Mechanism of injury explains troponin elevation</li>
+                        <li>No ischemic symptoms prior to trauma</li>
+                        <li>42-year-old without cardiac risk factors</li>
+                        <li>Anticoagulation can convert minor bleeding into life-threatening hemorrhage</li>
+                    </ul>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">The patient is hemorrhaging. What is your next step?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case3-reverse-correct')"><span class="decision-letter">A</span>Reverse anticoagulation, massive transfusion protocol, surgical consultation</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-reverse-correct">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | Post-operative Day 1</div></div>
+                </div>
+                <h2>Course Correction</h2>
+                <div class="feedback-box feedback-suboptimal">
+                    <div class="feedback-title">⚡ Stabilized After Complication</div>
+                    <p>You reversed anticoagulation and the patient underwent emergent thoracotomy. He is now stable but required significant transfusion and has an extended ICU stay.</p>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Operative Findings</div>
+                    Intercostal artery injury from rib fractures. 2 liters of blood evacuated from left hemithorax.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Blunt Cardiac Injury Management</div>
+                    <ul class="content-list">
+                        <li>Continuous cardiac monitoring for arrhythmias (24-48 hours)</li>
+                        <li>Serial troponin to assess severity</li>
+                        <li>Echocardiography for structural damage</li>
+                        <li>NO anticoagulation unless specifically indicated</li>
+                        <li>Supportive care</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="showScreen('case3-step1')">← Review Initial Presentation</button>
+                    <button class="btn btn-primary" onclick="completeCase(3); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-blunt-cardiac">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | 6 hours later</div></div>
+                </div>
+                <h2>Optimal Management: Blunt Cardiac Injury Protocol</h2>
+                <div class="feedback-box feedback-optimal">
+                    <div class="feedback-title">✓ Excellent Clinical Reasoning</div>
+                    <p>You correctly identified this as blunt cardiac injury and initiated appropriate monitoring without unnecessary anticoagulation.</p>
+                </div>
+                <h3>Management Initiated</h3>
+                <ul class="content-list">
+                    <li>Continuous telemetry monitoring</li>
+                    <li>Serial troponin Q6H</li>
+                    <li>Urgent bedside echocardiogram</li>
+                    <li>Pain management (avoiding NSAIDs)</li>
+                    <li>Chest tube placed for pneumothorax</li>
+                </ul>
+                <div class="ekg-display">
+                    <div class="ekg-label">Echocardiogram:</div>
+                    <div class="ekg-finding">Normal LV size and function, EF 55-60%. Mild RV dysfunction with hypokinesis of free wall. Trivial pericardial effusion. No valvular abnormalities.</div>
+                </div>
+                <div class="lab-results">
+                    <div class="lab-item"><span class="lab-name">Troponin (6 hours)</span><span class="lab-value high">1.48 ng/mL (peaked)</span></div>
+                    <div class="lab-item"><span class="lab-name">Troponin (12 hours)</span><span class="lab-value">0.92 ng/mL (downtrending)</span></div>
+                    <div class="lab-item"><span class="lab-name">Troponin (24 hours)</span><span class="lab-value">0.41 ng/mL (resolving)</span></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Telemetry Report (24 hours)</div>
+                    Sinus tachycardia resolving. Heart rate now 88-96 bpm. Occasional PVCs (fewer than admission). No sustained arrhythmias.
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">The troponin is downtrending with no significant arrhythmias. What is your disposition plan?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case3-final-correct')"><span class="decision-letter">A</span>Continue monitoring for 48 hours, then transfer to floor if stable; follow-up echo in 1 week</button>
+                        <button class="decision-btn" onclick="showScreen('case3-discharge-early')"><span class="decision-letter">B</span>Troponin trending down and no arrhythmias—safe to discharge home tomorrow</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-ignore">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | 8 hours later</div></div>
+                </div>
+                <h2>Consequence: Unmonitored Arrhythmia</h2>
+                <div class="feedback-box feedback-critical">
+                    <div class="feedback-title">⚠️ Cardiac Arrest</div>
+                    <p>Without cardiac monitoring, the patient was transferred to the trauma floor. At 3 AM, the nurse finds him unresponsive with no pulse.</p>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Code Blue</div>
+                    Initial rhythm: Ventricular fibrillation. CPR initiated. After 2 shocks and epinephrine, return of spontaneous circulation achieved.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Critical Teaching Point</div>
+                    <p><strong>Blunt cardiac injury can cause life-threatening arrhythmias.</strong> Key points:</p>
+                    <ul class="content-list">
+                        <li>BCI can cause ventricular arrhythmias, conduction blocks, and atrial fibrillation</li>
+                        <li>Risk is highest in first 24-48 hours</li>
+                        <li>Sternal fractures are associated with higher risk of BCI</li>
+                        <li>All trauma patients with elevated troponin need continuous cardiac monitoring</li>
+                    </ul>
+                </div>
+                <div class="decision-container">
+                    <div class="decision-label">The patient has ROSC. What is the appropriate management now?</div>
+                    <div class="decision-buttons">
+                        <button class="decision-btn" onclick="showScreen('case3-blunt-cardiac')"><span class="decision-letter">A</span>ICU admission with continuous monitoring, echocardiogram, and cardiology consultation</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-discharge-early">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | 36 hours post-admission</div></div>
+                </div>
+                <h2>Consequence: Premature Discharge</h2>
+                <div class="feedback-box feedback-suboptimal">
+                    <div class="feedback-title">⚡ Return Visit</div>
+                    <p>The patient was discharged home but returns to the ED 12 hours later with palpitations and near-syncope.</p>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value abnormal">156 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value abnormal">88/54 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">Rhythm</div><div class="vital-value abnormal">Atrial Fibrillation</div></div>
+                </div>
+                <div class="clinical-note">
+                    <div class="clinical-note-label">Clinical Update</div>
+                    New-onset atrial fibrillation with rapid ventricular response from myocardial irritation. He requires rate control and admission. This could have been identified with appropriate 48-hour monitoring.
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ BCI Monitoring Guidelines</div>
+                    <p>Patients with blunt cardiac injury should be monitored for <strong>at least 24-48 hours</strong>:</p>
+                    <ul class="content-list">
+                        <li>Continuous telemetry for minimum 24 hours, longer if abnormal EKG or significant troponin</li>
+                        <li>Repeat EKG if symptoms develop</li>
+                        <li>Follow-up echocardiogram</li>
+                        <li>Activity restrictions until cleared</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="showScreen('case3-step1')">← Review Initial Presentation</button>
+                    <button class="btn btn-primary" onclick="completeCase(3); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="screen" id="case3-final-correct">
+            <div class="card">
+                <div class="patient-header">
+                    <div class="patient-avatar">JM</div>
+                    <div><div class="patient-name">James Mitchell</div><div class="patient-demographics">42-year-old Male | Day 4</div></div>
+                </div>
+                <h2>Optimal Outcome: Complete Recovery</h2>
+                <div class="feedback-box feedback-optimal">
+                    <div class="feedback-title">✓ Excellent Management</div>
+                    <p>Your appropriate 48-hour monitoring period allowed for safe observation and confirmation of cardiac stability before discharge.</p>
+                </div>
+                <h3>Hospital Course Summary</h3>
+                <ul class="content-list">
+                    <li>48 hours of continuous telemetry without significant arrhythmias</li>
+                    <li>Troponin trended down and normalized by day 3</li>
+                    <li>Repeat echocardiogram showed resolved RV dysfunction</li>
+                    <li>Pneumothorax resolved, chest tube removed</li>
+                    <li>Pain well controlled with multimodal analgesia</li>
+                </ul>
+                <div class="vitals-grid">
+                    <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">124/78 mmHg</div></div>
+                    <div class="vital-item"><div class="vital-label">HR</div><div class="vital-value">76 bpm</div></div>
+                    <div class="vital-item"><div class="vital-label">SpO₂</div><div class="vital-value">98% RA</div></div>
+                </div>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">ℹ️ Key Learning Points: Blunt Cardiac Injury</div>
+                    <ul class="content-list">
+                        <li><strong>Mechanism:</strong> Direct chest trauma (steering wheel, seatbelt, airbag)</li>
+                        <li><strong>Risk factors:</strong> Sternal fracture, multiple rib fractures, high-speed impact</li>
+                        <li><strong>Presentation:</strong> Troponin elevation, arrhythmias, nonspecific EKG changes</li>
+                        <li><strong>Management:</strong> Continuous monitoring 24-48 hours, echocardiogram, NO anticoagulation</li>
+                        <li><strong>Complications:</strong> Arrhythmias, cardiac contusion, rarely myocardial rupture</li>
+                        <li><strong>Prognosis:</strong> Generally excellent with appropriate monitoring</li>
+                    </ul>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="completeCase(3); showScreen('intro-screen')">Complete Case & Return to Menu →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPLETION SCREEN -->
+        <section class="screen" id="completion-screen" aria-labelledby="completion-title">
+            <div class="card card-intro">
+                <svg viewBox="0 0 280 80" aria-hidden="true" style="margin-bottom: 1.5rem; height: 60px; width: auto;">
+                    <polygon points="35,10 50,20 50,40 35,50 20,40 20,20" fill="#C41E3A"/>
+                    <polygon points="50,40 65,50 65,70 50,80 35,70 35,50" fill="#6b6b6b"/>
+                    <polygon points="20,40 35,50 35,70 20,80 5,70 5,50" fill="#a0a0a0"/>
+                    <text x="80" y="55" font-family="Arial Black, sans-serif" font-size="42" font-weight="900">
+                        <tspan fill="#C41E3A">DMS</tspan><tspan fill="#6b6b6b">c</tspan>
+                    </text>
+                </svg>
+                <h1 id="completion-title">Simulation Complete!</h1>
+                <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto 1.5rem;">Congratulations! You have completed all three clinical decision-making scenarios on acute cardiac events.</p>
+            </div>
+            <div class="card">
+                <h2>Key Takeaways</h2>
+                <div class="feedback-box feedback-info">
+                    <div class="feedback-title">📋 Summary</div>
+                    <p><strong>Troponin elevation is common in ICU patients but does not always indicate ACS.</strong></p>
+                </div>
+                <h3>Classification of Troponin Elevation</h3>
+                <ul class="content-list">
+                    <li><strong>Type 1 MI:</strong> Plaque rupture with coronary thrombosis — ACS protocol and revascularization</li>
+                    <li><strong>Type 2 MI:</strong> Supply-demand mismatch — treat underlying cause</li>
+                    <li><strong>Non-ischemic injury:</strong> Myocarditis, PE, Takotsubo, blunt cardiac injury — etiology-specific management</li>
+                </ul>
+                <h3>Clinical Pearls</h3>
+                <ul class="content-list">
+                    <li>"Treat the patient, not the troponin" — clinical context is essential</li>
+                    <li>Avoid unnecessary anticoagulation in critically ill patients</li>
+                    <li>EKG interpretation and troponin trends are diagnostically important</li>
+                    <li>Use imaging selectively to guide diagnosis</li>
+                    <li>Consult cardiology when the diagnosis is unclear</li>
+                </ul>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="resetSimulation()">Restart Simulation</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>University of Lynchburg DMSc Program | Critical Care Medicine II</p>
+        <p>This simulation is for educational purposes only.</p>
+    </footer>
+
+    <script>
+        let completedCases = { 1: false, 2: false, 3: false };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const heading = targetScreen.querySelector('h1, h2');
+                if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
+            }
+            checkAllComplete();
+        }
+
+        function startCase(caseNum) {
+            document.getElementById('prog-' + caseNum).classList.add('active');
+            showScreen('case' + caseNum + '-step1');
+        }
+
+        function handleCaseKey(event, caseNum) {
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); startCase(caseNum); }
+        }
+
+        function completeCase(caseNum) {
+            completedCases[caseNum] = true;
+            document.getElementById('prog-' + caseNum).classList.remove('active');
+            document.getElementById('prog-' + caseNum).classList.add('completed');
+            document.getElementById('case-card-' + caseNum).classList.add('completed');
+            checkAllComplete();
+        }
+
+        function checkAllComplete() {
+            if (completedCases[1] && completedCases[2] && completedCases[3]) {
+                setTimeout(() => showScreen('completion-screen'), 500);
+            }
+        }
+
+        function resetSimulation() {
+            completedCases = { 1: false, 2: false, 3: false };
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('prog-' + i).classList.remove('active', 'completed');
+                document.getElementById('case-card-' + i).classList.remove('completed');
+            }
+            showScreen('intro-screen');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() { showScreen('intro-screen'); });
+    </script>
+</body>
+</html>
